@@ -1,8 +1,9 @@
 import logging
 import time
 import threading
+import os
 from datetime import datetime
-from kamene.all import sniff, IP, TCP, UDP, ICMP, ARP
+from kamene.all import sniff, IP, TCP, UDP, ICMP, ARP, rdpcap
 from kamene.error import Kamene_Exception as KameneException
 import pandas as pd
 import numpy as np
@@ -384,4 +385,143 @@ def stop_packet_capture():
     if capture_thread and capture_thread.is_alive():
         capture_thread.join(timeout=2.0)
     
+    return True
+
+def process_pcap_file(app, filepath):
+    """Process a PCAP file and store packets in the database"""
+    logger.info(f"Starting to process PCAP file: {filepath}")
+    
+    try:
+        # Read the PCAP file
+        packets = rdpcap(filepath)
+        logger.info(f"Successfully read {len(packets)} packets from {filepath}")
+        
+        # Process packets
+        with app.app_context():
+            from models import Packet, TrafficStat, db
+            
+            # Clear stats buffer for this analysis
+            stats_buffer.clear()
+            
+            # Process each packet
+            packet_count = 0
+            for packet in packets:
+                # Skip non-IP/non-ARP packets
+                if not packet.haslayer(IP) and not packet.haslayer(ARP):
+                    continue
+                
+                # Extract basic packet information
+                packet_info = {}
+                packet_info['timestamp'] = datetime.utcnow()  # Use current time as import time
+                
+                # Process packet based on its type
+                if packet.haslayer(IP):
+                    packet_info['source_ip'] = packet[IP].src
+                    packet_info['destination_ip'] = packet[IP].dst
+                    
+                    if packet.haslayer(TCP):
+                        packet_info['protocol'] = 'TCP'
+                        packet_info['source_port'] = packet[TCP].sport
+                        packet_info['destination_port'] = packet[TCP].dport
+                        packet_info['length'] = len(packet[TCP])
+                        
+                        # Extract TCP flags
+                        flags = []
+                        if packet[TCP].flags.S: flags.append('SYN')
+                        if packet[TCP].flags.A: flags.append('ACK')
+                        if packet[TCP].flags.F: flags.append('FIN')
+                        if packet[TCP].flags.R: flags.append('RST')
+                        if packet[TCP].flags.P: flags.append('PSH')
+                        packet_info['info'] = f"Flags: {' '.join(flags)}"
+                        
+                        # Update statistics
+                        stats_buffer[f"TCP:{packet[TCP].dport}"] += len(packet)
+                        
+                    elif packet.haslayer(UDP):
+                        packet_info['protocol'] = 'UDP'
+                        packet_info['source_port'] = packet[UDP].sport
+                        packet_info['destination_port'] = packet[UDP].dport
+                        packet_info['length'] = len(packet[UDP])
+                        packet_info['info'] = f"Length: {len(packet[UDP])}"
+                        
+                        # Update statistics
+                        stats_buffer[f"UDP:{packet[UDP].dport}"] += len(packet)
+                        
+                    elif packet.haslayer(ICMP):
+                        packet_info['protocol'] = 'ICMP'
+                        packet_info['source_port'] = None
+                        packet_info['destination_port'] = None
+                        packet_info['length'] = len(packet[ICMP])
+                        packet_info['info'] = f"Type: {packet[ICMP].type}, Code: {packet[ICMP].code}"
+                        
+                        # Update statistics
+                        stats_buffer["ICMP"] += len(packet)
+                        
+                    else:
+                        packet_info['protocol'] = 'IP'
+                        packet_info['source_port'] = None
+                        packet_info['destination_port'] = None
+                        packet_info['length'] = len(packet)
+                        packet_info['info'] = f"Protocol: {packet[IP].proto}"
+                        
+                        # Update statistics
+                        stats_buffer["IP"] += len(packet)
+                        
+                elif packet.haslayer(ARP):
+                    packet_info['protocol'] = 'ARP'
+                    packet_info['source_ip'] = packet[ARP].psrc
+                    packet_info['destination_ip'] = packet[ARP].pdst
+                    packet_info['source_port'] = None
+                    packet_info['destination_port'] = None
+                    packet_info['length'] = len(packet)
+                    
+                    if packet[ARP].op == 1:
+                        packet_info['info'] = "ARP Request"
+                    else:
+                        packet_info['info'] = "ARP Reply"
+                        
+                    # Update statistics
+                    stats_buffer["ARP"] += len(packet)
+                    
+                # Store packet in database
+                try:
+                    db_packet = Packet(**packet_info)
+                    db.session.add(db_packet)
+                    packet_count += 1
+                    
+                    # Commit in batches to avoid memory issues
+                    if packet_count % 100 == 0:
+                        db.session.commit()
+                        logger.info(f"Processed {packet_count} packets so far")
+                        
+                except Exception as e:
+                    logger.error(f"Error storing packet from PCAP: {str(e)}")
+                    db.session.rollback()
+            
+            # Final commit for any remaining packets
+            try:
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Error committing final batch: {str(e)}")
+                db.session.rollback()
+            
+            # Update traffic stats
+            update_traffic_stats(app)
+            
+            # Run anomaly detection
+            detect_anomalies(app)
+            
+            logger.info(f"Completed processing {packet_count} packets from PCAP file")
+            
+        # Clean up
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+                logger.info(f"Deleted temporary PCAP file: {filepath}")
+            except Exception as e:
+                logger.error(f"Error deleting PCAP file: {str(e)}")
+        
+    except Exception as e:
+        logger.error(f"Error processing PCAP file {filepath}: {str(e)}")
+        
     return True

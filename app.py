@@ -1,11 +1,13 @@
 import os
 import logging
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, login_required
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.utils import secure_filename
 import threading
+import tempfile
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -81,6 +83,12 @@ def alerts():
 @login_required
 def settings():
     return render_template('settings.html')
+    
+# PCAP upload page
+@app.route('/pcap')
+@login_required
+def pcap_upload():
+    return render_template('pcap_upload.html')
 
 # API routes for frontend
 @app.route('/api/traffic/summary')
@@ -142,6 +150,69 @@ def start_capture():
 def capture_status():
     from packet_capture import is_capture_running
     return jsonify({"running": is_capture_running()})
+
+# Configure upload settings
+UPLOAD_FOLDER = tempfile.gettempdir()
+ALLOWED_EXTENSIONS = {'pcap', 'pcapng', 'cap'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/api/pcap/upload', methods=['POST'])
+@login_required
+def upload_pcap():
+    from packet_capture import process_pcap_file
+    
+    # Check if a file was uploaded
+    if 'file' not in request.files:
+        flash('No file part', 'danger')
+        return jsonify({"status": "error", "message": "No file part"}), 400
+    
+    file = request.files['file']
+    
+    # Check if file was selected
+    if file.filename == '':
+        flash('No file selected', 'danger')
+        return jsonify({"status": "error", "message": "No file selected"}), 400
+    
+    # Check if it's an allowed file type
+    if file and allowed_file(file.filename):
+        # Secure the filename to prevent path traversal attacks
+        filename = secure_filename(file.filename)
+        
+        # Create a file path in the temporary directory
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Save the uploaded file
+        file.save(filepath)
+        
+        # Process the PCAP file in a separate thread
+        try:
+            thread = threading.Thread(
+                target=process_pcap_file,
+                args=(app, filepath)
+            )
+            thread.daemon = True
+            thread.start()
+            
+            flash(f'File {filename} uploaded and processing started', 'success')
+            return jsonify({
+                "status": "success", 
+                "message": "PCAP file uploaded and processing started"
+            })
+        except Exception as e:
+            logger.error(f"Error processing PCAP file: {str(e)}")
+            flash(f'Error processing file: {str(e)}', 'danger')
+            return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        flash('Invalid file type. Only PCAP files are allowed.', 'danger')
+        return jsonify({
+            "status": "error", 
+            "message": "Invalid file type. Only PCAP files are allowed."
+        }), 400
 
 # User loader for Flask-Login
 @login_manager.user_loader

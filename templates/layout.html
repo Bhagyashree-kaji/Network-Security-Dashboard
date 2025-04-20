@@ -53,6 +53,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/pcap' %}active{% endif %}" href="{{ url_for('pcap_upload') }}">
+                            <i class="fas fa-file-upload me-1"></i> PCAP Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.path == '/settings' %}active{% endif %}" href="{{ url_for('settings') }}">
                             <i class="fas fa-cog me-1"></i> Settings
                         </a>

@@ -1,0 +1,203 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5">
+            <i class="fas fa-tachometer-alt me-2"></i> Network Dashboard
+        </h1>
+        <p class="lead">Real-time monitoring of your network traffic</p>
+    </div>
+    <div class="col-auto">
+        <button id="start-capture-btn" class="btn btn-primary">
+            <i class="fas fa-play me-1"></i> Start Capture
+        </button>
+        <button id="refresh-data-btn" class="btn btn-secondary ms-2">
+            <i class="fas fa-sync me-1"></i> Refresh Data
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Traffic Summary Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-primary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                            Packets (Last Hour)
+                        </div>
+                        <div class="h5 mb-0 fw-bold" id="total-packets">Loading...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Transferred Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Data Transferred
+                        </div>
+                        <div class="h5 mb-0 fw-bold" id="total-mb">Loading...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Packet Rate Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-info shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                            Packet Rate
+                        </div>
+                        <div class="h5 mb-0 fw-bold" id="packet-rate">Loading...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            Active Alerts
+                        </div>
+                        <div class="h5 mb-0 fw-bold" id="active-alerts">Loading...</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Indicator -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div id="capture-status-indicator" class="me-2">
+                        <span class="badge bg-secondary"><i class="fas fa-circle-notch fa-spin me-1"></i> Checking...</span>
+                    </div>
+                    <div id="capture-status-text">Checking capture status...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Protocol Distribution Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 fw-bold">Protocol Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="protocolChart" height="300"></canvas>
+                </div>
+                <div id="no-protocol-data" class="text-center py-5 d-none">
+                    <i class="fas fa-chart-pie fa-3x text-gray-300 mb-3"></i>
+                    <p>No protocol data available yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Traffic Over Time Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 fw-bold">Traffic Over Time</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="trafficChart" height="300"></canvas>
+                </div>
+                <div id="no-traffic-data" class="text-center py-5 d-none">
+                    <i class="fas fa-chart-line fa-3x text-gray-300 mb-3"></i>
+                    <p>No traffic data available yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Alerts -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h6 class="m-0 fw-bold">Recent Alerts</h6>
+            </div>
+            <div class="card-body">
+                <div id="recent-alerts-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading alerts...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('alerts') }}" class="btn btn-sm btn-warning">View All Alerts</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top IPs -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 fw-bold">Top Source IPs</h6>
+            </div>
+            <div class="card-body">
+                <div id="top-ips-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading IP data...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('traffic') }}" class="btn btn-sm btn-success">View Detailed Traffic Analysis</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

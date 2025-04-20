@@ -1,0 +1,318 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5">
+            <i class="fas fa-cog me-2"></i> Settings
+        </h1>
+        <p class="lead">Configure your network monitoring system</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-3 mb-4">
+        <!-- Settings Navigation -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 fw-bold">Settings Menu</h6>
+            </div>
+            <div class="list-group list-group-flush" id="settings-tabs" role="tablist">
+                <a class="list-group-item list-group-item-action active" id="capture-tab" data-bs-toggle="list" href="#capture-settings" role="tab">
+                    <i class="fas fa-network-wired me-2"></i> Capture Settings
+                </a>
+                <a class="list-group-item list-group-item-action" id="alert-tab" data-bs-toggle="list" href="#alert-settings" role="tab">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Alert Settings
+                </a>
+                <a class="list-group-item list-group-item-action" id="display-tab" data-bs-toggle="list" href="#display-settings" role="tab">
+                    <i class="fas fa-desktop me-2"></i> Display Settings
+                </a>
+                <a class="list-group-item list-group-item-action" id="user-tab" data-bs-toggle="list" href="#user-settings" role="tab">
+                    <i class="fas fa-user-cog me-2"></i> User Settings
+                </a>
+                <a class="list-group-item list-group-item-action" id="system-tab" data-bs-toggle="list" href="#system-settings" role="tab">
+                    <i class="fas fa-server me-2"></i> System Information
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-lg-9">
+        <!-- Settings Content -->
+        <div class="tab-content">
+            <!-- Capture Settings -->
+            <div class="tab-pane fade show active" id="capture-settings" role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="m-0 fw-bold">Packet Capture Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="capture-settings-form">
+                            <div class="mb-3">
+                                <label for="interface-select" class="form-label">Network Interface</label>
+                                <select class="form-select" id="interface-select">
+                                    <option value="auto">Auto-detect</option>
+                                    <option value="eth0">eth0</option>
+                                    <option value="wlan0">wlan0</option>
+                                    <option value="lo">lo (loopback)</option>
+                                </select>
+                                <div class="form-text">Select the network interface to monitor</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="capture-filter" class="form-label">Capture Filter</label>
+                                <input type="text" class="form-control" id="capture-filter" placeholder="e.g. tcp port 80">
+                                <div class="form-text">Filter using BPF syntax (e.g., "tcp port 80" or "host 192.168.1.1")</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="packet-buffer" class="form-label">Packet Buffer Size</label>
+                                <select class="form-select" id="packet-buffer">
+                                    <option value="1000">1,000 packets</option>
+                                    <option value="5000">5,000 packets</option>
+                                    <option value="10000">10,000 packets</option>
+                                    <option value="50000">50,000 packets</option>
+                                </select>
+                                <div class="form-text">Maximum number of packets to keep in memory</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="auto-start-capture" checked>
+                                    <label class="form-check-label" for="auto-start-capture">Auto-start capture on system startup</label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Capture Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="m-0 fw-bold">Storage Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="storage-settings-form">
+                            <div class="mb-3">
+                                <label for="db-retention" class="form-label">Data Retention Period</label>
+                                <select class="form-select" id="db-retention">
+                                    <option value="1">1 day</option>
+                                    <option value="7" selected>7 days</option>
+                                    <option value="30">30 days</option>
+                                    <option value="90">90 days</option>
+                                </select>
+                                <div class="form-text">How long to keep packet data in the database</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="auto-clean-db" checked>
+                                    <label class="form-check-label" for="auto-clean-db">Automatically clean old records</label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-info">Save Storage Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alert Settings -->
+            <div class="tab-pane fade" id="alert-settings" role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-warning text-white">
+                        <h6 class="m-0 fw-bold">Alert Configuration</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="alert-settings-form">
+                            <div class="mb-3">
+                                <label class="form-label">Alert Types to Enable</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="port-scan-detection" checked>
+                                    <label class="form-check-label" for="port-scan-detection">Port Scan Detection</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="syn-flood-detection" checked>
+                                    <label class="form-check-label" for="syn-flood-detection">SYN Flood Detection</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="traffic-spike-detection" checked>
+                                    <label class="form-check-label" for="traffic-spike-detection">Traffic Spike Detection</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="unusual-protocol-detection">
+                                    <label class="form-check-label" for="unusual-protocol-detection">Unusual Protocol Detection</label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="port-scan-threshold" class="form-label">Port Scan Threshold (number of ports)</label>
+                                <input type="number" class="form-control" id="port-scan-threshold" value="15" min="5" max="100">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="syn-flood-threshold" class="form-label">SYN Flood Threshold (packets per minute)</label>
+                                <input type="number" class="form-control" id="syn-flood-threshold" value="20" min="10" max="500">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="traffic-spike-factor" class="form-label">Traffic Spike Factor (multiplier)</label>
+                                <input type="number" class="form-control" id="traffic-spike-factor" value="3.0" min="1.5" max="10" step="0.5">
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-warning">Save Alert Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display Settings -->
+            <div class="tab-pane fade" id="display-settings" role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="m-0 fw-bold">Dashboard Display Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="display-settings-form">
+                            <div class="mb-3">
+                                <label for="refresh-interval" class="form-label">Dashboard Refresh Interval (seconds)</label>
+                                <select class="form-select" id="refresh-interval">
+                                    <option value="0">Manual refresh only</option>
+                                    <option value="5">5 seconds</option>
+                                    <option value="10">10 seconds</option>
+                                    <option value="30" selected>30 seconds</option>
+                                    <option value="60">1 minute</option>
+                                    <option value="300">5 minutes</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="chart-time-window" class="form-label">Chart Time Window</label>
+                                <select class="form-select" id="chart-time-window">
+                                    <option value="15">Last 15 minutes</option>
+                                    <option value="30">Last 30 minutes</option>
+                                    <option value="60" selected>Last hour</option>
+                                    <option value="180">Last 3 hours</option>
+                                    <option value="360">Last 6 hours</option>
+                                    <option value="720">Last 12 hours</option>
+                                    <option value="1440">Last 24 hours</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="show-hostname" checked>
+                                    <label class="form-check-label" for="show-hostname">Show hostnames instead of IPs when available</label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="show-port-service" checked>
+                                    <label class="form-check-label" for="show-port-service">Show service names for well-known ports</label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success">Save Display Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Settings -->
+            <div class="tab-pane fade" id="user-settings" role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="m-0 fw-bold">Change Password</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="password-change-form">
+                            <div class="mb-3">
+                                <label for="current-password" class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="current-password" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new-password" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="new-password" required>
+                                <div class="form-text">Password must be at least 8 characters and include letters and numbers</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="confirm-password" class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirm-password" required>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">Change Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Settings -->
+            <div class="tab-pane fade" id="system-settings" role="tabpanel">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="m-0 fw-bold">System Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Application Version</th>
+                                    <td>1.0.0</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Database</th>
+                                    <td>SQLite</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Backend</th>
+                                    <td>Flask</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Database Size</th>
+                                    <td id="db-size">Calculating...</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">System Uptime</th>
+                                    <td id="system-uptime">Calculating...</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">CPU Usage</th>
+                                    <td id="cpu-usage">Measuring...</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Memory Usage</th>
+                                    <td id="memory-usage">Measuring...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="d-grid gap-2 mt-3">
+                            <button id="system-refresh-btn" class="btn btn-secondary">
+                                <i class="fas fa-sync me-1"></i> Refresh System Info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

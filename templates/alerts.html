@@ -1,0 +1,264 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5">
+            <i class="fas fa-exclamation-triangle me-2"></i> Security Alerts
+        </h1>
+        <p class="lead">Monitor and manage security alerts from network traffic analysis</p>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group" role="group">
+            <button id="refresh-alerts-btn" class="btn btn-primary">
+                <i class="fas fa-sync me-1"></i> Refresh
+            </button>
+            <button id="filter-alerts-btn" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                Filter
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" data-filter="all">All Alerts</a></li>
+                <li><a class="dropdown-item" href="#" data-filter="critical">Critical Only</a></li>
+                <li><a class="dropdown-item" href="#" data-filter="high">High & Critical</a></li>
+                <li><a class="dropdown-item" href="#" data-filter="unresolved">Unresolved Only</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Summary Cards -->
+<div class="row mb-4">
+    <!-- Critical Alerts Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-danger shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                            Critical Alerts
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-danger" id="critical-alerts-count">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-skull-crossbones fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- High Alerts Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            High Alerts
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-warning" id="high-alerts-count">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-circle fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medium Alerts Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-info shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                            Medium Alerts
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-info" id="medium-alerts-count">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Alerts Card -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-secondary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
+                            Low Alerts
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-secondary" id="low-alerts-count">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-info-circle fa-2x text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold">Active Alerts</h6>
+                <span id="alerts-count-badge" class="badge bg-light text-danger">0 alerts</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="alertsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Source</th>
+                                <th>Destination</th>
+                                <th>Message</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading alerts...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-alerts" class="text-center py-5 d-none">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5>No active alerts</h5>
+                    <p>Your network appears to be running normally.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Types Chart -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 fw-bold">Alert Types Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="alertTypesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Timeline Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 fw-bold">Alert Timeline</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="alertTimelineChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Detail Modal -->
+<div class="modal fade" id="alertDetailModal" tabindex="-1" aria-labelledby="alertDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alertDetailModalLabel">Alert Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert d-flex align-items-center mb-4" id="alert-severity-indicator">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <div id="alert-severity-text">Alert</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Basic Information</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Alert ID</th>
+                                    <td id="alert-id"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Type</th>
+                                    <td id="alert-type"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Time</th>
+                                    <td id="alert-time"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Status</th>
+                                    <td id="alert-status"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Network Details</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Source IP</th>
+                                    <td id="alert-source"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Destination IP</th>
+                                    <td id="alert-destination"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2">Alert Message</h6>
+                        <p id="alert-message" class="p-2 bg-light rounded"></p>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2">Additional Details</h6>
+                        <pre id="alert-details" class="p-2 bg-dark text-white rounded" style="white-space: pre-wrap;"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="resolve-alert-btn" class="btn btn-success">Mark as Resolved</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/alerts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

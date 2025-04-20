@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5">
+            <i class="fas fa-exchange-alt me-2"></i> Packet Inspector
+        </h1>
+        <p class="lead">Examine and analyze individual network packets</p>
+    </div>
+    <div class="col-auto">
+        <div class="input-group">
+            <input type="text" id="packet-filter" class="form-control" placeholder="Filter packets...">
+            <button id="refresh-packets-btn" class="btn btn-primary">
+                <i class="fas fa-sync me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="m-0 fw-bold">Advanced Filters</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="ip-filter" class="form-label">IP Address</label>
+                        <input type="text" id="ip-filter" class="form-control" placeholder="e.g. 192.168.1.1">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="port-filter" class="form-label">Port</label>
+                        <input type="text" id="port-filter" class="form-control" placeholder="e.g. 80, 443">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="protocol-filter" class="form-label">Protocol</label>
+                        <select id="protocol-filter" class="form-select">
+                            <option value="">All Protocols</option>
+                            <option value="TCP">TCP</option>
+                            <option value="UDP">UDP</option>
+                            <option value="ICMP">ICMP</option>
+                            <option value="ARP">ARP</option>
+                            <option value="IP">IP (Other)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="packet-limit" class="form-label">Limit</label>
+                        <select id="packet-limit" class="form-select">
+                            <option value="50">50 packets</option>
+                            <option value="100">100 packets</option>
+                            <option value="250">250 packets</option>
+                            <option value="500">500 packets</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button id="apply-filters-btn" class="btn btn-primary">Apply Filters</button>
+                    <button id="clear-filters-btn" class="btn btn-secondary ms-2">Clear Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Packets Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 fw-bold">Packet List</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="packetsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Source</th>
+                                <th>Destination</th>
+                                <th>Protocol</th>
+                                <th>Length</th>
+                                <th>Info</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="packetsBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading packets...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="pagination-controls" class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span id="pagination-info">Showing 0 - 0 of 0 packets</span>
+                    </div>
+                    <div>
+                        <button id="prev-page-btn" class="btn btn-sm btn-secondary" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <button id="next-page-btn" class="btn btn-sm btn-secondary" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Packet Detail Modal -->
+<div class="modal fade" id="packetDetailModal" tabindex="-1" aria-labelledby="packetDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="packetDetailModalLabel">Packet Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Basic Information</h6>
+                        <table class="table table-sm">
+                            <tbody id="packet-basic-info">
+                                <!-- Basic packet info goes here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">Header Information</h6>
+                        <table class="table table-sm">
+                            <tbody id="packet-header-info">
+                                <!-- Header info goes here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2">Packet Hex Dump</h6>
+                        <div id="packet-hex-dump" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+                            <!-- Hex dump goes here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/packet_inspector.js') }}"></script>
+{% endblock %}

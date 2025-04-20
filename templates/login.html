@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="my-0"><i class="fas fa-sign-in-alt me-2"></i>Login</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('login') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.username.id }}" class="form-label">{{ form.username.label }}</label>
+                        {{ form.username(class="form-control", placeholder="Enter your username") }}
+                        {% for error in form.username.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password.id }}" class="form-label">{{ form.password.label }}</label>
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
+                        {% for error in form.password.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.remember_me(class="form-check-input") }}
+                        <label class="form-check-label" for="{{ form.remember_me.id }}">
+                            {{ form.remember_me.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-8 mx-auto text-center">
+        <div class="card bg-dark">
+            <div class="card-body">
+                <h4 class="text-primary mb-3">Network Traffic Monitoring System</h4>
+                <p class="lead">
+                    A comprehensive solution for capturing, analyzing, and visualizing network traffic.
+                </p>
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-network fa-3x text-info mb-3"></i>
+                        </div>
+                        <h5>Real-time Monitoring</h5>
+                        <p>Live capture and analysis of network packets</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
+                        </div>
+                        <h5>Security Alerts</h5>
+                        <p>Detect anomalies and potential security threats</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                        </div>
+                        <h5>Traffic Analysis</h5>
+                        <p>Visualize and understand your network usage</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
